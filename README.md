@@ -129,7 +129,7 @@ standard library headers).
 
 Building from source requires:
 
-- LLVM/Clang development packages, version 21 or 22
+- LLVM/Clang development packages, version 21, 22 or 23
 - Python 3.12+ with development headers
 - CMake 3.20+
 - A C++20 compiler: g++ 13+, or a Clang matching the LLVM major
