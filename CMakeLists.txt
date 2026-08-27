@@ -10,6 +10,8 @@ include(GNUInstallDirs)
 # This option won't make a lot of sense since we only ship the shared library in site-packages
 # Perhaps this should permanently be OFF and users can build their own CppInterOp if they want to run the tests?
 option(CPPJIT_ENABLE_CPPINTEROP_TESTS "enable CppInterOp tests" OFF)
+# Temporary pin to the overload-resolution development branch so CI builds
+# and tests it. Returns to a pinned commit once that branch lands.
 set(CPPINTEROP_GIT_REPOSITORY "https://github.com/compiler-research/CppInterOp.git" CACHE STRING "")
 set(CPPINTEROP_GIT_TAG "f4adaa6b50542dd564089fe584d407bf15351c97" CACHE STRING "")
 set(CPPINTEROP_SOURCE_DIR "" CACHE PATH
