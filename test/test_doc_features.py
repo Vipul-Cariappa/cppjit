@@ -142,11 +142,6 @@ int call_int_int_function(int (*f)(int, int), int i1, int i2) {
     return f(i1, i2);
 }
 
-template<class A, class B, class C = A>
-C multiply(A a, B b) {
-    return static_cast<C>(a * b);
-}
-
 //-----
 namespace Namespace {
 
@@ -556,6 +551,12 @@ namespace Zoo {
     }
 
 }
+""")
+        cppjit.cppdef(r"""
+    template<class A, class B, class C = A>
+    C multiply(A a, B b) {
+        return static_cast<C>(a * b);
+    }
 """)
 
         # pythonize the animal release function to take ownership on return
