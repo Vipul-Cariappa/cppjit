@@ -331,6 +331,10 @@ interop::TCppType_t interop::ResolveEnumPointerType(TCppType_t type) {
   return type;
 }
 
+interop::TCppType_t interop::GetNonReferenceType(interop::TCppType_t type) {
+  return (type && Cpp::IsReferenceType(type)) ? Cpp::GetNonReferenceType(type) : type;
+}
+
 interop::TCppType_t int_like_type(interop::TCppType_t type) {
   interop::TCppType_t check_int_typedefs = type;
   if (Cpp::IsPointerType(check_int_typedefs))
@@ -380,7 +384,7 @@ interop::TCppType_t interop::GetPointerType(TCppType_t type) {
   std::lock_guard<std::recursive_mutex> Lock(InterOpMutex);
   Cpp::ValueKind ref = Cpp::GetValueKind(type);
   TCppType_t pointer_type = type;
-  pointer_type = Cpp::GetPointerType(Cpp::GetNonReferenceType(type));
+  pointer_type = Cpp::GetPointerType(interop::GetNonReferenceType(type));
   if (ref == Cpp::ValueKind::LValue)
     return Cpp::GetReferencedType(pointer_type, false);
   if (ref == Cpp::ValueKind::RValue)
@@ -1602,8 +1606,7 @@ interop::TCppMethod_t BestOverloadFunctionMatch(
       Cpp::ValueKind ref = Cpp::ValueKind::None;
       bool pointer = false;
       static interop::TCppScope_t initializer_list_scope =
-          interop::GetScopeFromType(interop::GetTypeFromScope(
-              interop::GetScope("std::initializer_list")));
+          Cpp::GetTemplatedDecl(interop::GetScope("std::initializer_list"));
       static interop::TCppScope_t vector_scope =
           interop::GetScope("std::vector");
       static interop::TCppType_t string_type = interop::GetRealType(
@@ -1625,13 +1628,13 @@ interop::TCppMethod_t BestOverloadFunctionMatch(
         old_type = arg.m_Type;
         arg.m_Type = interop::GetPointerType(arg.m_Type).data;
         if (ref != Cpp::ValueKind::None)
-          arg.m_Type = Cpp::GetNonReferenceType(arg.m_Type).data;
+          arg.m_Type = interop::GetNonReferenceType(arg.m_Type).data;
       } else if (Cpp::IsEquivalentTypes(string_type, arg.m_Type, qual, ref,
                                         pointer) &&
                  (Cpp::IsEquivalentTypes(char_pointer_type, fn_arg_type, qual,
                                          ref, pointer)) &&
-                 (Cpp::IsPointerType(Cpp::GetNonReferenceType(
-                     interop::ResolveType(fn_arg_type))))) {
+                 (Cpp::IsPointerType(
+                     interop::GetNonReferenceType(interop::ResolveType(fn_arg_type))))) {
         // promote std::string to char*
         old_type = arg.m_Type;
         arg.m_Type = char_pointer_type.data;
@@ -1647,8 +1650,8 @@ interop::TCppMethod_t BestOverloadFunctionMatch(
                                         pointer) &&
                  (Cpp::IsEquivalentTypes(char_pointer_type, arg.m_Type, qual,
                                          ref, pointer)) &&
-                 (Cpp::IsPointerType(Cpp::GetNonReferenceType(
-                     interop::ResolveType(arg.m_Type))))) {
+                 (Cpp::IsPointerType(
+                     interop::GetNonReferenceType(interop::ResolveType(arg.m_Type))))) {
         // promote char* to std::string
         old_type = arg.m_Type;
         arg.m_Type = string_type.data;
@@ -1656,8 +1659,8 @@ interop::TCppMethod_t BestOverloadFunctionMatch(
                                         pointer) &&
                  (Cpp::IsEquivalentTypes(wchar_pointer_type, fn_arg_type, qual,
                                          ref, pointer)) &&
-                 (Cpp::IsPointerType(Cpp::GetNonReferenceType(
-                     interop::ResolveType(fn_arg_type))))) {
+                 (Cpp::IsPointerType(
+                     interop::GetNonReferenceType(interop::ResolveType(fn_arg_type))))) {
         // promote std::string to wchar_t*
         old_type = arg.m_Type;
         arg.m_Type = wchar_pointer_type.data;
@@ -1665,8 +1668,8 @@ interop::TCppMethod_t BestOverloadFunctionMatch(
                                         pointer) &&
                  (Cpp::IsEquivalentTypes(wchar_pointer_type, arg.m_Type, qual,
                                          ref, pointer)) &&
-                 (Cpp::IsPointerType(Cpp::GetNonReferenceType(
-                     interop::ResolveType(arg.m_Type))))) {
+                 (Cpp::IsPointerType(
+                     interop::GetNonReferenceType(interop::ResolveType(arg.m_Type))))) {
         // promote wchar_t* to std::wstring
         old_type = arg.m_Type;
         arg.m_Type = wstring_type.data;
@@ -1704,13 +1707,12 @@ interop::TCppMethod_t BestOverloadFunctionMatch(
         if (ref != Cpp::ValueKind::None) {
           if (Cpp::GetValueKind(arg.m_Type) == ref) {
             // remove reference
-            arg.m_Type = Cpp::GetNonReferenceType(arg.m_Type).data;
+            arg.m_Type = interop::GetNonReferenceType(arg.m_Type).data;
           } else {
             // create a reference
-            arg.m_Type =
-                Cpp::GetReferencedType(Cpp::GetNonReferenceType(arg.m_Type),
-                                       ref == Cpp::ValueKind::RValue)
-                    .data;
+            arg.m_Type = Cpp::GetReferencedType(interop::GetNonReferenceType(arg.m_Type),
+                                                ref == Cpp::ValueKind::RValue)
+                             .data;
           }
         }
         if (pointer) {
@@ -1919,6 +1921,8 @@ interop::TCppMethod_t interop::GetGlobalOperator(
 
 // method properties ---------------------------------------------------------
 bool interop::IsDeletedMethod(TCppMethod_t method) {
+  if (Cpp::IsTemplatedFunction(method))
+      method = Cpp::GetTemplatedDecl(method.data).data;
   return Cpp::IsFunctionDeleted(method);
 }
 
