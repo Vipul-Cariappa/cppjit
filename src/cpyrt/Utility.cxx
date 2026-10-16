@@ -837,6 +837,9 @@ bool cpyrt::Utility::AddTypeName(std::string& tmpl_name, PyObject* tn,
       if (!ret) {
         return false;
       }
+    } else if (arg) {
+      // the element type of an empty list is unknown
+      tmpl_name.append("std::initializer_list<__cppjit_internal::UnknownType>");
     }
 
     return true;
