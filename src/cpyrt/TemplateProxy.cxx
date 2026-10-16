@@ -309,7 +309,7 @@ PyObject* TemplateProxy::Instantiate(const std::string& fname,
     return pymeth;
   }
 
-  PyErr_Format(PyExc_TypeError, "Failed to instantiate \"%s(%s)\"",
+  PyErr_Format(gOverloadResolutionException, "Failed to instantiate \"%s(%s)\"",
                fname.c_str(), proto.c_str());
   return nullptr;
 }
